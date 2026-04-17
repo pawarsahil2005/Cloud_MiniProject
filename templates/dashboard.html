@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Student Performance Multi-Class Prediction Dashboard">
+    <title>Student Performance Prediction Dashboard | EduPredict</title>
+
+    <!-- Bootstrap 5.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- SIDEBAR NAVIGATION                         -->
+    <!-- ══════════════════════════════════════════ -->
+    <nav id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <i class="bi bi-mortarboard-fill"></i>
+            </div>
+            <h5 class="sidebar-title">EduPredict</h5>
+            <span class="sidebar-subtitle">Dashboard</span>
+        </div>
+
+        <div class="sidebar-nav">
+            <a href="#prediction-section" class="nav-link active" data-section="prediction-section">
+                <i class="bi bi-bullseye"></i>
+                <span>Prediction</span>
+            </a>
+            <a href="#results-section" class="nav-link" data-section="results-section">
+                <i class="bi bi-graph-up-arrow"></i>
+                <span>Results</span>
+            </a>
+            <a href="#batch-section" class="nav-link" data-section="batch-section">
+                <i class="bi bi-file-earmark-spreadsheet"></i>
+                <span>Batch Upload</span>
+            </a>
+            <a href="#analytics-section" class="nav-link" data-section="analytics-section">
+                <i class="bi bi-bar-chart-line-fill"></i>
+                <span>Analytics</span>
+            </a>
+            <a href="#suggestions-section" class="nav-link" data-section="suggestions-section">
+                <i class="bi bi-lightbulb-fill"></i>
+                <span>Suggestions</span>
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="model-badge">
+                <i class="bi bi-cpu-fill"></i>
+                <span>Random Forest</span>
+            </div>
+            <div class="accuracy-badge">
+                <span>Accuracy</span>
+                <strong>{{ (accuracy * 100) | round(1) }}%</strong>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- MAIN CONTENT                               -->
+    <!-- ══════════════════════════════════════════ -->
+    <main class="main-content">
+
+        <!-- HEADER -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div>
+                    <h1 class="header-title">Student Performance Dashboard</h1>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="header-stat">
+                    <i class="bi bi-database-fill"></i>
+                    <div>
+                        <span class="stat-label">Features</span>
+                        <strong class="stat-value">6</strong>
+                    </div>
+                </div>
+                <div class="header-stat">
+                    <i class="bi bi-diagram-3-fill"></i>
+                    <div>
+                        <span class="stat-label">Classes</span>
+                        <strong class="stat-value">4</strong>
+                    </div>
+                </div>
+                <div class="header-stat accent">
+                    <i class="bi bi-trophy-fill"></i>
+                    <div>
+                        <span class="stat-label">Accuracy</span>
+                        <strong class="stat-value">{{ (accuracy * 100) | round(1) }}%</strong>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- LOADING OVERLAY -->
+        <div id="loading-overlay" class="loading-overlay" style="display: none;">
+            <div class="spinner-container">
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+                <p class="spinner-text">Analyzing student data...</p>
+            </div>
+        </div>
+
+        <!-- ──────────── PREDICTION FORM SECTION ──────────── -->
+        <section id="prediction-section" class="content-section">
+            <div class="section-header">
+                <h2><i class="bi bi-input-cursor-text"></i> Student Data Input</h2>
+                <p>Enter student academic metrics to predict performance class</p>
+            </div>
+
+            <div class="card glass-card prediction-card">
+                <div class="card-body">
+                    <form id="prediction-form">
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <div class="form-floating-custom">
+                                    <label for="study_hours">
+                                        <i class="bi bi-book-half"></i> Study Hours (per day)
+                                    </label>
+                                    <input type="number" step="0.1" min="0" max="24"
+                                           class="form-control" id="study_hours"
+                                           placeholder="e.g. 6.5" required>
+                                    <span class="input-hint">0 - 24 hours</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-floating-custom">
+                                    <label for="attendance">
+                                        <i class="bi bi-calendar-check"></i> Attendance (%)
+                                    </label>
+                                    <input type="number" step="0.1" min="0" max="100"
+                                           class="form-control" id="attendance"
+                                           placeholder="e.g. 88.5" required>
+                                    <span class="input-hint">0 - 100%</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-floating-custom">
+                                    <label for="internal_marks">
+                                        <i class="bi bi-pencil-square"></i> Internal Marks
+                                    </label>
+                                    <input type="number" step="0.1" min="0" max="100"
+                                           class="form-control" id="internal_marks"
+                                           placeholder="e.g. 75" required>
+                                    <span class="input-hint">0 - 100</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-floating-custom">
+                                    <label for="termwork_marks">
+                                        <i class="bi bi-clipboard-data"></i> Termwork Marks
+                                    </label>
+                                    <input type="number" step="0.1" min="0" max="100"
+                                           class="form-control" id="termwork_marks"
+                                           placeholder="e.g. 82" required>
+                                    <span class="input-hint">0 - 100</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-floating-custom">
+                                    <label for="previous_cgpa">
+                                        <i class="bi bi-award"></i> Previous CGPA
+                                    </label>
+                                    <input type="number" step="0.01" min="0" max="10"
+                                           class="form-control" id="previous_cgpa"
+                                           placeholder="e.g. 8.2" required>
+                                    <span class="input-hint">0 - 10</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-floating-custom">
+                                    <label for="certifications_completed">
+                                        <i class="bi bi-patch-check-fill"></i> Certifications Done
+                                    </label>
+                                    <input type="number" step="1" min="0"
+                                           class="form-control" id="certifications_completed"
+                                           placeholder="e.g. 3" required>
+                                    <span class="input-hint">Number completed</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-predict" id="predict-btn">
+                                <i class="bi bi-lightning-charge-fill"></i>
+                                Predict Performance
+                            </button>
+                            <button type="reset" class="btn btn-reset" id="reset-btn">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                                Reset Form
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- ──────────── RESULTS SECTION ──────────── -->
+        <section id="results-section" class="content-section" style="display: none;">
+            <div class="section-header">
+                <h2><i class="bi bi-clipboard-check"></i> Prediction Results</h2>
+                <p>Performance classification with confidence analysis</p>
+            </div>
+
+            <div class="row g-4">
+                <!-- Prediction Result Card -->
+                <div class="col-lg-5">
+                    <div class="card glass-card result-card" id="result-card">
+                        <div class="card-body text-center">
+                            <div class="result-icon" id="result-icon">🎯</div>
+                            <h3 class="result-label">Predicted Class</h3>
+                            <div class="result-badge" id="result-badge">—</div>
+
+                            <!-- Confidence Score -->
+                            <div class="confidence-section">
+                                <div class="confidence-header">
+                                    <span>Confidence Score</span>
+                                    <strong id="confidence-value">0%</strong>
+                                </div>
+                                <div class="confidence-bar-track">
+                                    <div class="confidence-bar-fill" id="confidence-bar" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Class Probabilities -->
+                            <div class="probabilities-section" id="probabilities-section">
+                                <h6 class="prob-title">Class Probabilities</h6>
+                                <div id="probabilities-container"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature Importance Chart -->
+                <div class="col-lg-7">
+                    <div class="card glass-card chart-card">
+                        <div class="card-body">
+                            <h5 class="chart-title">
+                                <i class="bi bi-bar-chart-fill"></i>
+                                Feature Importance Analysis
+                            </h5>
+                            <div class="chart-wrapper">
+                                <canvas id="featureImportanceChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ──────────── BATCH PREDICTION SECTION ──────────── -->
+        <section id="batch-section" class="content-section">
+            <div class="section-header">
+                <h2><i class="bi bi-file-earmark-arrow-up"></i> Batch CSV Prediction</h2>
+                <p>Upload a CSV file with multiple student records for bulk analysis</p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-5">
+                    <div class="card glass-card upload-card">
+                        <div class="card-body">
+                            <div class="upload-zone" id="upload-zone">
+                                <i class="bi bi-cloud-arrow-up-fill upload-icon"></i>
+                                <h5>Drag & Drop CSV File</h5>
+                                <p>or click to browse files</p>
+                                <input type="file" id="csv-file-input" accept=".csv" hidden>
+                                <span class="file-name" id="file-name">No file selected</span>
+                            </div>
+
+                            <div class="csv-requirements">
+                                <h6><i class="bi bi-info-circle"></i> Required CSV Columns:</h6>
+                                <div class="column-tags">
+                                    {% for feat in features %}
+                                    <span class="column-tag">{{ feat }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <button class="btn btn-predict w-100 mt-3" id="batch-predict-btn" disabled>
+                                <i class="bi bi-cpu"></i>
+                                Run Batch Prediction
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-7">
+                    <div class="card glass-card" id="batch-results-card" style="display: none;">
+                        <div class="card-body">
+                            <h5 class="chart-title">
+                                <i class="bi bi-pie-chart-fill"></i>
+                                Batch Prediction Summary
+                            </h5>
+
+                            <!-- Summary Stats -->
+                            <div class="batch-summary" id="batch-summary"></div>
+
+                            <!-- Batch Chart -->
+                            <div class="chart-wrapper mt-3">
+                                <canvas id="batchChart"></canvas>
+                            </div>
+
+                            <!-- Results Table -->
+                            <div class="batch-table-wrapper mt-4" id="batch-table-wrapper" style="display: none;">
+                                <h6><i class="bi bi-table"></i> Detailed Results</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-dark table-hover" id="batch-table">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Prediction</th>
+                                                <th>Confidence</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="batch-table-body"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ──────────── ANALYTICS SECTION ──────────── -->
+        <section id="analytics-section" class="content-section">
+            <div class="section-header">
+                <h2><i class="bi bi-graph-up"></i> Analytics & Insights</h2>
+                <p>Performance metrics and feature analysis visualizations</p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="card glass-card chart-card">
+                        <div class="card-body">
+                            <h5 class="chart-title">
+                                <i class="bi bi-bar-chart-steps"></i>
+                                Feature Importance (Horizontal)
+                            </h5>
+                            <div class="chart-wrapper">
+                                <canvas id="analyticsFeatureChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card glass-card chart-card">
+                        <div class="card-body">
+                            <h5 class="chart-title">
+                                <i class="bi bi-pie-chart"></i>
+                                Feature Contribution Distribution
+                            </h5>
+                            <div class="chart-wrapper">
+                                <canvas id="featurePieChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ──────────── SUGGESTIONS SECTION ──────────── -->
+        <section id="suggestions-section" class="content-section" style="display: none;">
+            <div class="section-header">
+                <h2><i class="bi bi-lightbulb"></i> Smart Suggestions</h2>
+                <p>Personalized recommendations based on prediction results</p>
+            </div>
+
+            <div class="card glass-card" id="suggestions-card">
+                <div class="card-body">
+                    <div class="suggestions-placeholder" id="suggestions-placeholder">
+                        <i class="bi bi-robot"></i>
+                        <h4>No Prediction Yet</h4>
+                        <p>Submit a student prediction to receive personalized suggestions and recommendations.</p>
+                    </div>
+                    <div id="suggestions-content" style="display: none;"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="dashboard-footer">
+            <p>🎓 Student Performance Prediction Dashboard &mdash; EduPredict Analytics Platform</p>
+        </footer>
+    </main>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
