@@ -1,4 +1,4 @@
-````md
+```
 # EduPredict — Student Performance Prediction Dashboard
 
 A cloud-based student performance prediction dashboard built using Flask, Machine Learning, and an interactive frontend UI. The system predicts student performance categories such as At Risk, Average, Good, and Excellent using a trained Random Forest Classifier.
